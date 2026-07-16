@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Key, ExternalLink, Check, Eye, EyeOff, X } from 'lucide-react';
+import { Settings, Key, ExternalLink, Check, Eye, EyeOff, X, User, LogOut, Cloud, CloudOff, LogIn } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   onClose: () => void;
 }
 
 const SettingsModal = ({ onClose }: Props) => {
-  const { settings, updateSettings, setShowBottomNav } = useAppStore();
+  const { settings, updateSettings, setShowBottomNav, user, syncStatus, syncToCloud, logout } = useAppStore();
   const [apiKey, setApiKey] = useState(settings.deepseekApiKey || '');
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setShowBottomNav(false);
@@ -27,9 +30,76 @@ const SettingsModal = ({ onClose }: Props) => {
     }, 1000);
   };
 
+  const handleSyncNow = async () => {
+    setSyncing(true);
+    await syncToCloud();
+    setTimeout(() => setSyncing(false), 500);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    onClose();
+  };
+
+  const handleLogin = () => {
+    onClose();
+    navigate('/login');
+  };
+
   // 内容（共用）
   const Content = () => (
     <div className="space-y-5">
+      {/* 账号同步 */}
+      <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <Cloud className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-neutral-800">云端同步</h3>
+            <p className="text-xs text-neutral-500">
+              {user ? `已登录: ${user.email}` : '登录后多设备同步数据'}
+            </p>
+          </div>
+          {user && (
+            <div className={`w-2 h-2 rounded-full ${syncStatus === 'syncing' ? 'bg-yellow-400 animate-pulse' : syncStatus === 'error' ? 'bg-red-400' : 'bg-green-400'}`} />
+          )}
+        </div>
+        {user ? (
+          <div className="flex gap-2">
+            <button
+              onClick={handleSyncNow}
+              disabled={syncing || syncStatus === 'syncing'}
+              className="flex-1 py-2.5 rounded-xl bg-white text-indigo-600 text-sm font-medium hover:bg-indigo-50 transition-colors flex items-center justify-center gap-1.5 border border-indigo-200 disabled:opacity-50"
+            >
+              <Cloud size={16} className={syncing || syncStatus === 'syncing' ? 'animate-spin' : ''} />
+              {syncing || syncStatus === 'syncing' ? '同步中...' : '立即同步'}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 py-2.5 rounded-xl bg-white text-neutral-600 text-sm font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-1.5 border border-neutral-200"
+            >
+              <LogOut size={16} />
+              退出登录
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={handleLogin}
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-sm font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+          >
+            <LogIn size={16} />
+            登录 / 注册
+          </button>
+        )}
+        {syncStatus === 'error' && (
+          <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+            <CloudOff size={12} />
+            同步失败，请检查网络
+          </p>
+        )}
+      </div>
+
       <div>
         <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 mb-2">
           <Key className="w-4 h-4" />
@@ -61,7 +131,7 @@ const SettingsModal = ({ onClose }: Props) => {
           <ExternalLink className="w-3 h-3" />
         </a>
         <p className="text-xs text-neutral-400 mt-2">
-          Key 只存在你本地浏览器，不会上传服务器。新用户有免费额度。
+          {user ? '已同步到云端，换设备登录自动恢复' : 'Key 只存在你本地浏览器，登录后可同步'}
         </p>
       </div>
     </div>

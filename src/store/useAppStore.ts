@@ -12,6 +12,28 @@ import type {
   HealthPlan,
   ExerciseAction,
 } from '../types';
+import {
+  supabase,
+  syncAllFromCloud,
+  syncAllToCloud,
+} from '../services/supabase';
+
+type User = {
+  id: string;
+  email: string;
+} | null;
+
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
+const debouncedSync = () => {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    const state = useAppStore.getState();
+    if (state.user) {
+      state.syncToCloud();
+    }
+  }, 1000);
+};
 
 interface AppState {
   tasks: Task[];
@@ -20,7 +42,15 @@ interface AppState {
   healthPlans: HealthPlan[];
   settings: AppSettings;
   showBottomNav: boolean;
+  user: User;
+  syncStatus: 'idle' | 'syncing' | 'success' | 'error';
+  syncError: string | null;
   setShowBottomNav: (show: boolean) => void;
+  setUser: (user: User) => void;
+  syncFromCloud: (userId: string) => Promise<void>;
+  syncToCloud: () => Promise<void>;
+  logout: () => Promise<void>;
+  initAuth: () => Promise<void>;
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
@@ -172,6 +202,81 @@ export const useAppStore = create<AppState>()(
         notificationEnabled: false,
       },
       showBottomNav: true,
+      user: null,
+      syncStatus: 'idle',
+      syncError: null,
+
+      setUser: (user) => {
+        set({ user });
+      },
+
+      syncFromCloud: async (userId: string) => {
+        set({ syncStatus: 'syncing', syncError: null });
+        try {
+          const result = await syncAllFromCloud(userId);
+          set({
+            tasks: result.tasks.length > 0 ? result.tasks : get().tasks,
+            healthRecords: result.healthRecords.length > 0 ? result.healthRecords : get().healthRecords,
+            healthPlans: result.healthPlans.length > 0 ? result.healthPlans : get().healthPlans,
+            settings: result.settings || get().settings,
+            syncStatus: 'success',
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : '同步失败';
+          set({ syncStatus: 'error', syncError: msg });
+          console.error('从云端同步失败:', err);
+        }
+      },
+
+      syncToCloud: async () => {
+        const { user, tasks, healthRecords, healthPlans, settings } = get();
+        if (!user) return;
+
+        set({ syncStatus: 'syncing', syncError: null });
+        try {
+          await syncAllToCloud(user.id, {
+            tasks,
+            healthRecords,
+            healthPlans,
+            settings,
+          });
+          set({ syncStatus: 'success' });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : '同步失败';
+          set({ syncStatus: 'error', syncError: msg });
+          console.error('同步到云端失败:', err);
+        }
+      },
+
+      logout: async () => {
+        await supabase.auth.signOut();
+        set({ user: null, syncStatus: 'idle', syncError: null });
+      },
+
+      initAuth: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const user = {
+            id: session.user.id,
+            email: session.user.email || '',
+          };
+          set({ user });
+          await get().syncFromCloud(user.id);
+        }
+
+        supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session?.user) {
+            const user = {
+              id: session.user.id,
+              email: session.user.email || '',
+            };
+            set({ user });
+            get().syncFromCloud(user.id);
+          } else if (event === 'SIGNED_OUT') {
+            set({ user: null });
+          }
+        });
+      },
 
       addTask: (task) => {
         const newTask: Task = {
@@ -180,6 +285,7 @@ export const useAppStore = create<AppState>()(
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ tasks: [...state.tasks, newTask] }));
+        debouncedSync();
       },
 
       updateTask: (id, updates) => {
@@ -188,12 +294,14 @@ export const useAppStore = create<AppState>()(
             task.id === id ? { ...task, ...updates } : task
           ),
         }));
+        debouncedSync();
       },
 
       deleteTask: (id) => {
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
         }));
+        debouncedSync();
       },
 
       toggleTaskComplete: (id) => {
@@ -202,6 +310,7 @@ export const useAppStore = create<AppState>()(
             task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
           ),
         }));
+        debouncedSync();
       },
 
       addHealthRecord: (record) => {
@@ -211,12 +320,14 @@ export const useAppStore = create<AppState>()(
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ healthRecords: [...state.healthRecords, newRecord] }));
+        debouncedSync();
       },
 
       deleteHealthRecord: (id) => {
         set((state) => ({
           healthRecords: state.healthRecords.filter((r) => r.id !== id),
         }));
+        debouncedSync();
       },
 
       addChatMessage: (message) => {
@@ -245,6 +356,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           settings: { ...state.settings, ...updates },
         }));
+        debouncedSync();
       },
 
       setShowBottomNav: (show) => {
@@ -312,6 +424,7 @@ export const useAppStore = create<AppState>()(
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ healthPlans: [...state.healthPlans, newPlan] }));
+        debouncedSync();
         return id;
       },
 
@@ -321,12 +434,14 @@ export const useAppStore = create<AppState>()(
             p.id === id ? { ...p, ...updates } : p
           ),
         }));
+        debouncedSync();
       },
 
       deleteHealthPlan: (id) => {
         set((state) => ({
           healthPlans: state.healthPlans.filter((p) => p.id !== id),
         }));
+        debouncedSync();
       },
 
       updateExerciseAction: (planId, actionId, updates) => {
@@ -342,6 +457,7 @@ export const useAppStore = create<AppState>()(
               : plan
           ),
         }));
+        debouncedSync();
       },
 
       getActiveHealthPlan: () => {
@@ -356,7 +472,13 @@ export const useAppStore = create<AppState>()(
         chatMessages: state.chatMessages,
         healthPlans: state.healthPlans,
         settings: state.settings,
+        user: state.user,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.initAuth();
+        }
+      },
     }
   )
 );
