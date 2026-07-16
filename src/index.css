@@ -1,16 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
+  line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
-  color: #2D3436;
-  background-color: #FAF8F5;
+  color: #1D1D1F;
+  background-color: #F5F5F7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -25,14 +24,14 @@
 
 body {
   min-height: 100vh;
-  background-color: #FAF8F5;
+  background-color: #F5F5F7;
 }
 
 #root {
   min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* 自定义滚动条 - 苹果风格 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -43,117 +42,50 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D4CFC9;
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8A39D;
+  background: rgba(0, 0, 0, 0.25);
 }
 
-/* Glass morphism utility */
+/* 毛玻璃效果（用于导航栏） */
 .glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
-.glass-dark {
-  background: rgba(45, 52, 54, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #FF9A56 0%, #FF6B35 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-text-mint {
-  background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-text-lavender {
-  background: linear-gradient(135deg, #9B88FF 0%, #7B68EE 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Gradient backgrounds */
-.gradient-primary {
-  background: linear-gradient(135deg, #FF9A56 0%, #FF6B35 100%);
-}
-
-.gradient-mint {
-  background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
-}
-
-.gradient-lavender {
-  background: linear-gradient(135deg, #9B88FF 0%, #7B68EE 100%);
-}
-
-.gradient-sunset {
-  background: linear-gradient(135deg, #FF9A56 0%, #FF6B6B 50%, #9B88FF 100%);
-}
-
-/* Card hover effect */
+/* 卡片悬停 - 苹果风格克制动画 */
 .card-hover {
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 
-/* Button base style */
-.btn-primary {
-  background: linear-gradient(135deg, #FF9A56 0%, #FF6B35 100%);
-  color: white;
-  border: none;
-  border-radius: 9999px;
-  padding: 10px 24px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 14px rgba(255, 107, 53, 0.3);
+/* 按钮点击反馈 */
+button {
+  -webkit-tap-highlight-color: transparent;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+button:active {
+  opacity: 0.7;
+  transition: opacity 0.1s;
 }
 
-.btn-primary:active {
-  transform: translateY(0);
+/* 输入框聚焦 - 苹果风格 */
+input:focus,
+textarea:focus {
+  outline: none;
 }
 
-/* Noise texture overlay */
-.noise-overlay {
-  position: relative;
-}
-
-.noise-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  pointer-events: none;
-}
-
-/* Decorative blob */
-.blob {
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.4;
+/* 移除 iOS 输入框默认样式 */
+input,
+textarea,
+button {
+  -webkit-appearance: none;
+  appearance: none;
 }

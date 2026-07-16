@@ -9,45 +9,47 @@ export default {
     },
     extend: {
       colors: {
+        // 苹果风格色彩系统
         primary: {
-          50: "#FFF5F0",
-          100: "#FFE8DD",
-          200: "#FFD1BC",
-          300: "#FFB394",
-          400: "#FF9A56",
-          500: "#FF7B35",
-          600: "#FF6B35",
-          700: "#E85A25",
-          800: "#C44A1E",
-          900: "#9E3B18",
-        },
-        secondary: {
-          mint: "#4ECDC4",
-          lavender: "#9B88FF",
-          coral: "#FF6B6B",
-          sunflower: "#FFD93D",
+          50: "#E8F2FE",
+          100: "#D1E5FD",
+          200: "#A3CBFB",
+          300: "#75B2F9",
+          400: "#4798F7",
+          500: "#0071E3",  // 苹果蓝
+          600: "#0062C4",
+          700: "#0054A8",
+          800: "#00458A",
+          900: "#00376D",
         },
         neutral: {
-          50: "#FAF8F5",
-          100: "#F5F2ED",
-          200: "#E8E4DF",
-          300: "#D4CFC9",
-          400: "#A8A39D",
-          500: "#7A7670",
-          600: "#5C5853",
-          700: "#45423E",
-          800: "#2D3436",
-          900: "#1A1C1E",
+          50: "#F5F5F7",   // 苹果灰白背景
+          100: "#E8E8ED",
+          200: "#D2D2D7",
+          300: "#A1A1A6",
+          400: "#86868B",  // 苹果中灰
+          500: "#6E6E73",
+          600: "#515154",
+          700: "#3A3A3C",
+          800: "#1D1D1F",  // 苹果近黑
+          900: "#000000",
         },
       },
       fontFamily: {
-        display: ["Playfair Display", "serif"],
-        sans: ["Noto Sans SC", "system-ui", "sans-serif"],
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "SF Pro Display",
+          "SF Pro Text",
+          "PingFang SC",
+          "Helvetica Neue",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       boxShadow: {
-        card: "0 4px 24px -4px rgba(0, 0, 0, 0.08)",
-        cardHover: "0 8px 32px -4px rgba(0, 0, 0, 0.12)",
-        glass: "0 8px 32px rgba(0, 0, 0, 0.1)",
+        card: "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+        cardHover: "0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)",
       },
       borderRadius: {
         '2xl': '16px',
@@ -55,27 +57,16 @@ export default {
         '4xl': '28px',
       },
       animation: {
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'slide-up': 'slideUp 0.5s ease-out',
         'fade-in': 'fadeIn 0.3s ease-out',
         'scale-in': 'scaleIn 0.2s ease-out',
       },
       keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
         scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '0%': { opacity: '0', transform: 'scale(0.96)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
       },

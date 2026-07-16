@@ -9,13 +9,18 @@ import type {
   HealthType,
   ChatMessage,
   AppSettings,
+  HealthPlan,
+  ExerciseAction,
 } from '../types';
 
 interface AppState {
   tasks: Task[];
   healthRecords: HealthRecord[];
   chatMessages: ChatMessage[];
+  healthPlans: HealthPlan[];
   settings: AppSettings;
+  showBottomNav: boolean;
+  setShowBottomNav: (show: boolean) => void;
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
@@ -30,6 +35,12 @@ interface AppState {
   getTodayHealthRecords: (type: HealthType) => HealthRecord[];
   getHealthTrend: (type: HealthType, days?: number) => HealthRecord[];
   requestNotificationPermission: () => Promise<boolean>;
+  // 健康计划管理
+  addHealthPlan: (plan: Omit<HealthPlan, 'id' | 'createdAt'>) => string;
+  updateHealthPlan: (id: string, updates: Partial<HealthPlan>) => void;
+  deleteHealthPlan: (id: string) => void;
+  updateExerciseAction: (planId: string, actionId: string, updates: Partial<ExerciseAction>) => void;
+  getActiveHealthPlan: () => HealthPlan | undefined;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 11);
@@ -144,7 +155,7 @@ const createMockData = () => {
     },
   ];
 
-  return { tasks, healthRecords, chatMessages };
+  return { tasks, healthRecords, chatMessages, healthPlans: [] };
 };
 
 const mockData = createMockData();
@@ -155,10 +166,12 @@ export const useAppStore = create<AppState>()(
       tasks: mockData.tasks,
       healthRecords: mockData.healthRecords,
       chatMessages: mockData.chatMessages,
+      healthPlans: mockData.healthPlans,
       settings: {
         theme: 'light',
         notificationEnabled: false,
       },
+      showBottomNav: true,
 
       addTask: (task) => {
         const newTask: Task = {
@@ -234,6 +247,10 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
+      setShowBottomNav: (show) => {
+        set({ showBottomNav: show });
+      },
+
       getTodayTasks: () => {
         const today = getTodayDate();
         return get().tasks.filter((task) => task.dueDate.startsWith(today));
@@ -285,6 +302,51 @@ export const useAppStore = create<AppState>()(
         get().updateSettings({ notificationEnabled: granted });
         return granted;
       },
+
+      // 健康计划管理方法
+      addHealthPlan: (plan) => {
+        const id = generateId();
+        const newPlan: HealthPlan = {
+          ...plan,
+          id,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({ healthPlans: [...state.healthPlans, newPlan] }));
+        return id;
+      },
+
+      updateHealthPlan: (id, updates) => {
+        set((state) => ({
+          healthPlans: state.healthPlans.map((p) =>
+            p.id === id ? { ...p, ...updates } : p
+          ),
+        }));
+      },
+
+      deleteHealthPlan: (id) => {
+        set((state) => ({
+          healthPlans: state.healthPlans.filter((p) => p.id !== id),
+        }));
+      },
+
+      updateExerciseAction: (planId, actionId, updates) => {
+        set((state) => ({
+          healthPlans: state.healthPlans.map((plan) =>
+            plan.id === planId
+              ? {
+                  ...plan,
+                  actions: plan.actions.map((a) =>
+                    a.id === actionId ? { ...a, ...updates } : a
+                  ),
+                }
+              : plan
+          ),
+        }));
+      },
+
+      getActiveHealthPlan: () => {
+        return get().healthPlans.find((p) => p.status === 'active');
+      },
     }),
     {
       name: 'personal-butler-storage',
@@ -292,6 +354,7 @@ export const useAppStore = create<AppState>()(
         tasks: state.tasks,
         healthRecords: state.healthRecords,
         chatMessages: state.chatMessages,
+        healthPlans: state.healthPlans,
         settings: state.settings,
       }),
     }

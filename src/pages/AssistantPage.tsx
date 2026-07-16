@@ -10,16 +10,18 @@ import {
   Trash2,
   Bot,
   User,
+  AlertCircle,
+  Settings,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store/useAppStore';
 import { formatTime } from '../utils/dateUtils';
+import { chatWithAI, buildAssistantMessages } from '../services/deepseek';
 
 const AssistantPage = () => {
-  const navigate = useNavigate();
-  const { chatMessages, addChatMessage, clearChatMessages, addTask } = useAppStore();
+  const { chatMessages, addChatMessage, clearChatMessages, settings } = useAppStore();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -28,72 +30,52 @@ const AssistantPage = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chatMessages, isTyping]);
+  }, [chatMessages, isTyping, error]);
 
   const quickActions = [
-    { icon: Plus, label: '创建任务', text: '帮我创建一个明天下午3点的会议任务', color: 'from-primary-400 to-primary-600' },
-    { icon: Droplets, label: '健康建议', text: '给我一些保持健康的建议', color: 'from-blue-400 to-cyan-400' },
-    { icon: CheckSquare, label: '今日任务', text: '我今天有哪些任务？', color: 'from-green-400 to-teal-400' },
-    { icon: Heart, label: '运动计划', text: '帮我制定一个本周运动计划', color: 'from-orange-400 to-red-400' },
+    { icon: Plus, label: '创建任务', text: '帮我创建一个明天下午3点的会议任务', color: '#0071E3' },
+    { icon: Droplets, label: '健康建议', text: '给我一些保持健康的建议', color: '#007AFF' },
+    { icon: CheckSquare, label: '今日任务', text: '我今天有哪些任务？', color: '#34C759' },
+    { icon: Heart, label: '运动计划', text: '帮我制定一个本周运动计划', color: '#FF9500' },
   ];
 
-  const generateResponse = (message: string): string => {
-    const msg = message.toLowerCase();
-
-    if (msg.includes('任务') || msg.includes('todo') || msg.includes('待办')) {
-      if (msg.includes('今天') || msg.includes('今日')) {
-        const { getTodayTasks } = useAppStore.getState();
-        const todayTasks = getTodayTasks();
-        const pending = todayTasks.filter((t) => !t.isCompleted);
-        if (pending.length === 0) {
-          return '恭喜你！今天的任务都完成啦，享受一下悠闲时光吧 ✨';
-        }
-        return `你今天还有 ${pending.length} 个待办任务：\n\n${pending.map((t, i) => `${i + 1}. ${t.title}（${formatTime(t.dueDate)}）`).join('\n')}\n\n加油，完成它们你就自由了！💪`;
-      }
-      if (msg.includes('创建') || msg.includes('添加') || msg.includes('新建')) {
-        return '好的！我来帮你创建任务。请告诉我：\n\n1. 任务标题是什么？\n2. 什么时候截止？\n3. 需要设置提醒吗？\n\n或者你可以直接去任务页面创建，那里有更多选项哦～';
-      }
-      return '我可以帮你管理任务哦！你可以问我：\n- "我今天有哪些任务？"\n- "帮我创建一个任务"\n- "明天有什么安排？"\n\n或者直接点击下方快捷指令开始吧～';
-    }
-
-    if (msg.includes('健康') || msg.includes('喝水') || msg.includes('饮水') || msg.includes('运动') || msg.includes('睡眠')) {
-      if (msg.includes('建议') || msg.includes('建议')) {
-        return '以下是一些保持健康的小建议：\n\n🥤 **饮水**：每天至少喝2000ml水，早上起床先喝一杯温水\n\n🏃 **运动**：每周至少运动3次，每次30分钟以上\n\n😴 **睡眠**：保持规律作息，晚上11点前入睡\n\n🥗 **饮食**：多吃蔬菜水果，少吃油腻食物\n\n🧘 **心态**：保持愉快心情，适当放松\n\n需要我帮你记录健康数据吗？可以去健康管家页面看看～';
-      }
-      if (msg.includes('运动') || msg.includes('锻炼') || msg.includes('健身')) {
-        return '好的！为你推荐本周运动计划：\n\n**周一**：有氧运动30分钟（跑步/骑车）\n**周二**：力量训练（上肢）\n**周三**：休息日或瑜伽拉伸\n**周四**：有氧运动30分钟\n**周五**：力量训练（下肢）\n**周六**：户外运动（爬山/游泳）\n**周日**：充分休息\n\n记得循序渐进，贵在坚持！💪';
-      }
-      return '我是你的健康管家！可以帮你：\n- 记录饮水量\n- 记录运动时长\n- 记录睡眠情况\n- 记录体重变化\n\n去健康管家页面查看详细数据吧～';
-    }
-
-    if (msg.includes('你好') || msg.includes('hello') || msg.includes('hi') || msg.includes('嗨')) {
-      return '你好呀！👋 我是你的个人AI管家。\n\n我可以帮你：\n📝 管理任务和提醒\n💧 记录健康数据\n💡 提供生活建议\n\n有什么我可以帮你的吗？';
-    }
-
-    if (msg.includes('谢谢') || msg.includes('感谢')) {
-      return '不客气～能帮到你我很开心！😊\n\n如果还有其他需要，随时告诉我哦～';
-    }
-
-    if (msg.includes('你是谁') || msg.includes('介绍')) {
-      return '我是你的个人AI管家助手！🤖\n\n我可以帮你管理日常生活的方方面面：\n\n• **任务管理** - 创建、查看、提醒任务\n• **健康记录** - 记录饮水、运动、睡眠、体重\n• **智能建议** - 提供个性化健康建议\n• **日程安排** - 帮你规划时间\n\n点击下方快捷指令开始体验吧～';
-    }
-
-    return '我理解你的问题了！让我想想...🤔\n\n作为你的个人AI管家，我目前可以帮你：\n\n📋 **任务管理** - 创建和管理待办事项\n💪 **健康追踪** - 记录运动、饮水、睡眠等\n💡 **生活建议** - 提供健康和效率建议\n\n你可以尝试问我：\n- "我今天有什么任务？"\n- "给我一些健康建议"\n- "帮我创建一个任务"\n\n或者点击下方的快捷指令试试看～';
-  };
-
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isTyping) return;
 
     const userMessage = inputValue.trim();
     addChatMessage({ role: 'user', content: userMessage });
     setInputValue('');
+    setError(null);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const response = generateResponse(userMessage);
+    if (!settings.deepseekApiKey) {
+      setTimeout(() => {
+        addChatMessage({
+          role: 'assistant',
+          content: '⚠️ 请先在设置中配置 DeepSeek API Key，才能使用 AI 对话功能哦～\n\n点击右上角设置图标，填入你的 API Key 即可。',
+        });
+        setIsTyping(false);
+      }, 500);
+      return;
+    }
+
+    try {
+      const messages = buildAssistantMessages(chatMessages, userMessage);
+      const response = await chatWithAI({
+        messages,
+        apiKey: settings.deepseekApiKey,
+      });
       addChatMessage({ role: 'assistant', content: response });
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : '请求失败，请重试';
+      setError(errorMsg);
+      addChatMessage({
+        role: 'assistant',
+        content: `抱歉，出了点问题：${errorMsg}\n\n请检查 API Key 是否正确，或稍后再试。`,
+      });
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
   const handleQuickAction = (text: string) => {
@@ -108,34 +90,44 @@ const AssistantPage = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
-      <div className="mb-4">
-        <h1 className="font-display text-2xl font-semibold text-neutral-800 mb-1">
-          AI 助手
-        </h1>
-        <p className="text-sm text-neutral-500">
-          智能对话，帮你管理日常生活
-        </p>
+    <div className="h-[calc(100vh-5rem)] lg:h-[calc(100vh-3rem)] flex flex-col">
+      {/* 标题 */}
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-1">
+            AI 助手
+          </h1>
+          <p className="text-[15px] text-neutral-500">
+            智能对话，帮你管理日常生活
+          </p>
+        </div>
+        {!settings.deepseekApiKey && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-xl text-xs text-orange-600">
+            <AlertCircle className="w-4 h-4" />
+            <span>未配置 API Key</span>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 bg-white rounded-3xl shadow-card flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      {/* 对话区 */}
+      <div className="flex-1 bg-white rounded-2xl border border-neutral-200/60 flex flex-col overflow-hidden min-h-0">
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
           <AnimatePresence>
             {chatMessages.map((message) => (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex gap-2.5 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.role === 'user'
-                        ? 'gradient-primary'
-                        : 'gradient-lavender'
+                        ? 'bg-primary-500'
+                        : 'bg-neutral-800'
                     }`}
                   >
                     {message.role === 'user' ? (
@@ -145,18 +137,18 @@ const AssistantPage = () => {
                     )}
                   </div>
                   <div
-                    className={`px-4 py-3 rounded-2xl ${
+                    className={`px-4 py-2.5 rounded-2xl ${
                       message.role === 'user'
-                        ? 'gradient-primary text-white rounded-tr-sm'
-                        : 'bg-neutral-100 text-neutral-800 rounded-tl-sm'
+                        ? 'bg-primary-500 text-white rounded-tr-md'
+                        : 'bg-neutral-100 text-neutral-800 rounded-tl-md'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-line leading-relaxed">
+                    <p className="text-[15px] whitespace-pre-line leading-relaxed">
                       {message.content}
                     </p>
                     <p
-                      className={`text-xs mt-1 ${
-                        message.role === 'user' ? 'text-white/70' : 'text-neutral-400'
+                      className={`text-[11px] mt-1 ${
+                        message.role === 'user' ? 'text-white/60' : 'text-neutral-400'
                       }`}
                     >
                       {formatTime(message.timestamp)}
@@ -169,31 +161,24 @@ const AssistantPage = () => {
 
           {isTyping && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               className="flex justify-start"
             >
-              <div className="flex gap-3 max-w-[80%]">
-                <div className="w-8 h-8 rounded-full gradient-lavender flex items-center justify-center flex-shrink-0">
+              <div className="flex gap-2.5 max-w-[85%]">
+                <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="px-4 py-3 rounded-2xl bg-neutral-100 rounded-tl-sm">
+                <div className="px-4 py-3 rounded-2xl bg-neutral-100 rounded-tl-md">
                   <div className="flex gap-1">
-                    <motion.span
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.8, delay: 0 }}
-                      className="w-2 h-2 rounded-full bg-neutral-400"
-                    />
-                    <motion.span
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.8, delay: 0.2 }}
-                      className="w-2 h-2 rounded-full bg-neutral-400"
-                    />
-                    <motion.span
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.8, delay: 0.4 }}
-                      className="w-2 h-2 rounded-full bg-neutral-400"
-                    />
+                    {[0, 0.2, 0.4].map((delay) => (
+                      <motion.span
+                        key={delay}
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.8, delay }}
+                        className="w-1.5 h-1.5 rounded-full bg-neutral-400"
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -203,8 +188,9 @@ const AssistantPage = () => {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* 快捷指令 */}
         {chatMessages.length <= 1 && (
-          <div className="px-6 pb-4">
+          <div className="px-5 pb-3">
             <p className="text-xs text-neutral-400 mb-2 flex items-center gap-1">
               <Sparkles className="w-3 h-3" />
               快捷指令
@@ -213,31 +199,39 @@ const AssistantPage = () => {
               {quickActions.map((action, index) => {
                 const Icon = action.icon;
                 return (
-                  <motion.button
+                  <button
                     key={index}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleQuickAction(action.text)}
-                    className="flex items-center gap-2 p-3 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors text-left"
+                    className="flex items-center gap-2 p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 transition-colors text-left"
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center flex-shrink-0`}>
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: action.color }}
+                    >
                       <Icon className="w-4 h-4 text-white" />
                     </div>
                     <span className="text-sm font-medium text-neutral-700 truncate">
                       {action.label}
                     </span>
-                  </motion.button>
+                  </button>
                 );
               })}
             </div>
           </div>
         )}
 
+        {/* 输入框 */}
         <div className="p-4 border-t border-neutral-100">
-          <div className="flex items-end gap-3">
+          {error && (
+            <div className="mb-3 px-3 py-2 bg-red-50 rounded-xl text-xs text-red-500 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+          )}
+          <div className="flex items-end gap-2">
             <button
               onClick={clearChatMessages}
-              className="p-3 rounded-xl hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="p-2.5 rounded-xl hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors"
               title="清空对话"
             >
               <Trash2 className="w-5 h-5" />
@@ -247,25 +241,23 @@ const AssistantPage = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="输入消息..."
+                placeholder={settings.deepseekApiKey ? '输入消息...' : '请先配置 API Key'}
                 rows={1}
-                className="w-full px-4 py-3 pr-12 rounded-2xl border border-neutral-200 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all resize-none"
-                style={{ minHeight: '48px', maxHeight: '120px' }}
+                className="w-full px-4 py-2.5 rounded-xl bg-neutral-100 text-[15px] focus:bg-white focus:ring-2 focus:ring-neutral-200 outline-none transition-all resize-none placeholder:text-neutral-400"
+                style={{ minHeight: '44px', maxHeight: '120px' }}
               />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               onClick={handleSend}
-              disabled={!inputValue.trim()}
-              className={`p-3 rounded-xl transition-all ${
-                inputValue.trim()
-                  ? 'gradient-primary text-white shadow-lg shadow-primary-500/30'
+              disabled={!inputValue.trim() || isTyping}
+              className={`p-2.5 rounded-xl transition-colors ${
+                inputValue.trim() && !isTyping
+                  ? 'bg-primary-500 text-white hover:bg-primary-600'
                   : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
               }`}
             >
               <Send className="w-5 h-5" />
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>

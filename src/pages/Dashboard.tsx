@@ -45,16 +45,16 @@ const Dashboard = () => {
   };
 
   const healthColors: Record<HealthType, string> = {
-    water: 'from-blue-400 to-cyan-400',
-    exercise: 'from-orange-400 to-red-400',
-    sleep: 'from-purple-400 to-indigo-400',
-    weight: 'from-green-400 to-teal-400',
+    water: '#007AFF',
+    exercise: '#FF9500',
+    sleep: '#5856D6',
+    weight: '#34C759',
   };
 
   const priorityColors = {
-    high: 'bg-red-400',
-    medium: 'bg-amber-400',
-    low: 'bg-green-400',
+    high: 'bg-[#FF3B30]',
+    medium: 'bg-[#FF9500]',
+    low: 'bg-[#34C759]',
   };
 
   const containerVariants = {
@@ -62,17 +62,16 @@ const Dashboard = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.05,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      y: 0,
-      transition: { duration: 0.5, ease: 'easeOut' },
+      transition: { duration: 0.3, ease: 'easeOut' },
     },
   };
 
@@ -86,30 +85,28 @@ const Dashboard = () => {
       animate="visible"
       className="space-y-6"
     >
-      <motion.div variants={itemVariants} className="relative overflow-hidden rounded-3xl p-8 gradient-primary text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-white/5 rounded-full translate-y-1/2" />
-        <div className="relative z-10">
-          <p className="text-white/80 text-sm mb-1">{getFullDateDisplay()}</p>
-          <h1 className="font-display text-3xl font-semibold mb-2">
-            {getGreeting()}！
-          </h1>
-          <p className="text-white/90 text-sm max-w-md">
-            今天有 {totalTasks} 个任务等待完成，已完成 {completedTasks} 个。继续加油！
-          </p>
-        </div>
+      {/* 顶部问候 - 苹果风格大标题 */}
+      <motion.div variants={itemVariants}>
+        <p className="text-sm text-neutral-400 mb-1">{getFullDateDisplay()}</p>
+        <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-2">
+          {getGreeting()}
+        </h1>
+        <p className="text-[15px] text-neutral-500">
+          今天有 {totalTasks} 个任务，已完成 {completedTasks} 个
+        </p>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 今日任务进度 */}
         <motion.div
           variants={itemVariants}
-          className="bg-white rounded-2xl p-6 shadow-card card-hover"
+          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-neutral-800">今日任务</h3>
             <button
               onClick={() => navigate('/tasks')}
-              className="text-primary-500 text-sm flex items-center gap-1 hover:text-primary-600 transition-colors"
+              className="text-primary-500 text-sm flex items-center gap-0.5 hover:text-primary-600 transition-colors"
             >
               查看全部 <ChevronRight className="w-4 h-4" />
             </button>
@@ -121,57 +118,52 @@ const Dashboard = () => {
                   cx="72"
                   cy="72"
                   r="54"
-                  stroke="#F5F2ED"
-                  strokeWidth="12"
+                  stroke="#F5F5F7"
+                  strokeWidth="10"
                   fill="none"
                 />
                 <motion.circle
                   cx="72"
                   cy="72"
                   r="54"
-                  stroke="url(#gradient)"
-                  strokeWidth="12"
+                  stroke="#0071E3"
+                  strokeWidth="10"
                   fill="none"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
                   initial={{ strokeDashoffset: circumference }}
                   animate={{ strokeDashoffset }}
-                  transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
                 />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#FF9A56" />
-                    <stop offset="100%" stopColor="#FF6B35" />
-                  </linearGradient>
-                </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-neutral-800">{completionRate}%</span>
-                <span className="text-xs text-neutral-400">完成率</span>
+                <span className="text-3xl font-semibold text-neutral-800">{completionRate}%</span>
+                <span className="text-xs text-neutral-400 mt-0.5">完成率</span>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-4 text-center">
-            <div className="bg-neutral-50 rounded-xl py-3">
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="bg-neutral-50 rounded-xl py-3 text-center">
               <p className="text-2xl font-semibold text-neutral-800">{completedTasks}</p>
-              <p className="text-xs text-neutral-400">已完成</p>
+              <p className="text-xs text-neutral-400 mt-0.5">已完成</p>
             </div>
-            <div className="bg-neutral-50 rounded-xl py-3">
+            <div className="bg-neutral-50 rounded-xl py-3 text-center">
               <p className="text-2xl font-semibold text-neutral-800">{totalTasks - completedTasks}</p>
-              <p className="text-xs text-neutral-400">待完成</p>
+              <p className="text-xs text-neutral-400 mt-0.5">待完成</p>
             </div>
           </div>
         </motion.div>
 
+        {/* 健康概览 */}
         <motion.div
           variants={itemVariants}
-          className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-card card-hover"
+          className="lg:col-span-2 bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-semibold text-neutral-800">健康概览</h3>
             <button
               onClick={() => navigate('/health')}
-              className="text-primary-500 text-sm flex items-center gap-1 hover:text-primary-600 transition-colors"
+              className="text-primary-500 text-sm flex items-center gap-0.5 hover:text-primary-600 transition-colors"
             >
               查看详情 <ChevronRight className="w-4 h-4" />
             </button>
@@ -182,28 +174,34 @@ const Dashboard = () => {
               return (
                 <div
                   key={item.type}
-                  className="bg-neutral-50 rounded-xl p-4 text-center hover:bg-neutral-100 transition-colors cursor-pointer"
+                  className="bg-neutral-50 rounded-xl p-4 hover:bg-neutral-100 transition-colors cursor-pointer"
                   onClick={() => navigate('/health')}
                 >
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br ${healthColors[item.type]} flex items-center justify-center shadow-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
+                  <div
+                    className="w-10 h-10 mb-3 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${healthColors[item.type]}15` }}
+                  >
+                    <Icon
+                      className="w-5 h-5"
+                      style={{ color: healthColors[item.type] }}
+                    />
                   </div>
                   <p className="text-lg font-semibold text-neutral-800">
                     {item.total.toFixed(item.type === 'weight' ? 1 : 0)}
-                    <span className="text-xs text-neutral-400 ml-1">
+                    <span className="text-xs text-neutral-400 ml-1 font-normal">
                       {item.type === 'water' ? 'ml' : item.type === 'exercise' ? '分钟' : item.type === 'sleep' ? '小时' : 'kg'}
                     </span>
                   </p>
                   <p className="text-xs text-neutral-400 mb-2">{HEALTH_LABELS[item.type]}</p>
-                  <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                  <div className="w-full h-1 bg-neutral-200 rounded-full overflow-hidden">
                     <motion.div
-                      className={`h-full rounded-full bg-gradient-to-r ${healthColors[item.type]}`}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: healthColors[item.type] }}
                       initial={{ width: 0 }}
                       animate={{ width: `${item.percentage}%` }}
-                      transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+                      transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
                     />
                   </div>
-                  <p className="text-xs text-neutral-400 mt-1">{item.percentage}%</p>
                 </div>
               );
             })}
@@ -212,9 +210,10 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* 即将到来 */}
         <motion.div
           variants={itemVariants}
-          className="bg-white rounded-2xl p-6 shadow-card card-hover"
+          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -223,16 +222,16 @@ const Dashboard = () => {
             </div>
             <button
               onClick={() => navigate('/tasks')}
-              className="text-primary-500 text-sm flex items-center gap-1 hover:text-primary-600 transition-colors"
+              className="text-primary-500 text-sm flex items-center gap-0.5 hover:text-primary-600 transition-colors"
             >
               全部任务 <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {upcomingTasks.length === 0 ? (
               <div className="text-center py-8 text-neutral-400">
-                <CheckSquare className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                <p>暂无待办任务</p>
+                <CheckSquare className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">暂无待办任务</p>
               </div>
             ) : (
               upcomingTasks.map((task) => (
@@ -241,11 +240,11 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-50 transition-colors cursor-pointer"
                   onClick={() => navigate('/tasks')}
                 >
-                  <div className={`w-1 h-10 rounded-full ${priorityColors[task.priority]}`} />
+                  <div className={`w-1 h-8 rounded-full ${priorityColors[task.priority]}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-neutral-800 truncate">{task.title}</p>
-                    <p className="text-xs text-neutral-400 flex items-center gap-1">
-                      <span className="px-2 py-0.5 rounded-full bg-neutral-100">
+                    <p className="font-medium text-neutral-800 truncate text-[15px]">{task.title}</p>
+                    <p className="text-xs text-neutral-400 flex items-center gap-1.5 mt-0.5">
+                      <span className="px-2 py-0.5 rounded-md bg-neutral-100">
                         {CATEGORY_LABELS[task.category]}
                       </span>
                       <span>{formatRelativeTime(task.dueDate)}</span>
@@ -262,48 +261,49 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        {/* 快捷功能 */}
         <motion.div
           variants={itemVariants}
-          className="bg-gradient-to-br from-secondary-lavender/20 to-primary-100/50 rounded-2xl p-6 shadow-card card-hover"
+          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-secondary-lavender" />
+            <Sparkles className="w-5 h-5 text-primary-500" />
             <h3 className="font-semibold text-neutral-800">快捷功能</h3>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => navigate('/tasks')}
-              className="flex flex-col items-center gap-2 p-4 bg-white/70 backdrop-blur-sm rounded-xl hover:bg-white transition-all hover:shadow-md"
+              className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
             >
-              <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary-500/30">
-                <Plus className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center">
+                <Plus className="w-5 h-5 text-white" />
               </div>
               <span className="text-sm font-medium text-neutral-700">新建任务</span>
             </button>
             <button
               onClick={() => navigate('/health')}
-              className="flex flex-col items-center gap-2 p-4 bg-white/70 backdrop-blur-sm rounded-xl hover:bg-white transition-all hover:shadow-md"
+              className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
             >
-              <div className="w-12 h-12 rounded-xl gradient-mint flex items-center justify-center shadow-lg shadow-secondary-mint/30">
-                <Droplets className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#007AFF' }}>
+                <Droplets className="w-5 h-5 text-white" />
               </div>
               <span className="text-sm font-medium text-neutral-700">记录饮水</span>
             </button>
             <button
               onClick={() => navigate('/health')}
-              className="flex flex-col items-center gap-2 p-4 bg-white/70 backdrop-blur-sm rounded-xl hover:bg-white transition-all hover:shadow-md"
+              className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-400 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <Dumbbell className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#FF9500' }}>
+                <Dumbbell className="w-5 h-5 text-white" />
               </div>
               <span className="text-sm font-medium text-neutral-700">记录运动</span>
             </button>
             <button
               onClick={() => navigate('/assistant')}
-              className="flex flex-col items-center gap-2 p-4 bg-white/70 backdrop-blur-sm rounded-xl hover:bg-white transition-all hover:shadow-md"
+              className="flex flex-col items-center gap-2 p-4 bg-neutral-50 rounded-xl hover:bg-neutral-100 transition-colors"
             >
-              <div className="w-12 h-12 rounded-xl gradient-lavender flex items-center justify-center shadow-lg shadow-secondary-lavender/30">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-neutral-800 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
               <span className="text-sm font-medium text-neutral-700">AI 对话</span>
             </button>
