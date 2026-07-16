@@ -5,12 +5,14 @@ import TasksPage from '@/pages/TasksPage';
 import HealthPage from '@/pages/HealthPage';
 import AssistantPage from '@/pages/AssistantPage';
 import LoginPage from '@/pages/LoginPage';
+import AuthCallback from '@/pages/AuthCallback';
 
 export default function App() {
   return (
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -18,6 +20,7 @@ export default function App() {
           <Route path="/health" element={<HealthPage />} />
           <Route path="/assistant" element={<AssistantPage />} />
         </Route>
+        <Route path="*" element={<AuthCallback />} />
       </Routes>
     </Router>
   );

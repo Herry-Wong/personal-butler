@@ -32,6 +32,9 @@ const LoginPage = () => {
         const { error: signUpError, data } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin + window.location.pathname,
+          },
         });
 
         if (signUpError) throw signUpError;
