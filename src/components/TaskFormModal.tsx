@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Bell, Repeat, Flag } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useToastStore } from '../store/useToastStore';
 import { CATEGORY_LABELS, PRIORITY_LABELS, REPEAT_LABELS } from '../types';
 import type { Task, TaskCategory, TaskPriority, TaskRepeat } from '../types';
 
@@ -13,6 +14,7 @@ interface TaskFormModalProps {
 
 const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
   const { addTask, updateTask, setShowBottomNav } = useAppStore();
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     if (isOpen) {
@@ -73,6 +75,7 @@ const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
         repeat,
         reminderEnabled,
       });
+      addToast({ type: 'success', message: `「${title}」已更新` });
     } else {
       addTask({
         title,
@@ -84,6 +87,7 @@ const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
         repeat,
         reminderEnabled,
       });
+      addToast({ type: 'success', message: `「${title}」已创建` });
     }
 
     onClose();

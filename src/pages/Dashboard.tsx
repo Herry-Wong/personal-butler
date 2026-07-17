@@ -83,12 +83,12 @@ const Dashboard = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="space-y-4"
     >
       {/* 顶部问候 - 苹果风格大标题 */}
       <motion.div variants={itemVariants}>
         <p className="text-sm text-neutral-400 mb-1">{getFullDateDisplay()}</p>
-        <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-2">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
           {getGreeting()}
         </h1>
         <p className="text-[15px] text-neutral-500">

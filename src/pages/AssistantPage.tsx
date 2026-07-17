@@ -15,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useToastStore } from '../store/useToastStore';
 import { formatTime } from '../utils/dateUtils';
 import { chatWithAI, buildAssistantMessages, parseToolCalls, createToolExecutor } from '../services/deepseek';
 import type { ToolResult } from '../services/deepseek';
@@ -26,6 +27,7 @@ const AssistantPage = () => {
     tasks, addTask, updateTask, deleteTask,
     healthRecords, addHealthRecord,
   } = useAppStore();
+  const { addToast } = useToastStore();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +92,11 @@ const AssistantPage = () => {
         // 执行工具调用
         const results: ToolResult[] = toolCalls.map((tc) => executor(tc));
 
+        // 弹出通知
+        results.forEach((r) => {
+          addToast({ type: r.success ? 'success' : 'error', message: r.message });
+        });
+
         // 构建最终回复
         let finalContent = text;
         if (finalContent) {
@@ -131,7 +138,7 @@ const AssistantPage = () => {
       {/* 标题 */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
             AI 助手
           </h1>
           <p className="text-[15px] text-neutral-500">

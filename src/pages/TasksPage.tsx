@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit2, Check, Calendar, Clock, Flag, Repeat, Bell } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useToastStore } from '../store/useToastStore';
 import { formatTime, formatDate, formatRelativeTime } from '../utils/dateUtils';
 import { CATEGORY_LABELS, PRIORITY_LABELS, REPEAT_LABELS } from '../types';
 import type { TaskCategory, Task } from '../types';
@@ -9,6 +10,7 @@ import TaskFormModal from '../components/TaskFormModal';
 
 const TasksPage = () => {
   const { tasks, toggleTaskComplete, deleteTask } = useAppStore();
+  const { addToast } = useToastStore();
   const [activeCategory, setActiveCategory] = useState<TaskCategory | 'all'>('all');
   const [showForm, setShowForm] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -72,11 +74,11 @@ const TasksPage = () => {
   const completedTasks = filteredTasks.filter((t) => t.isCompleted).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 标题区 - 苹果大标题 */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
             任务提醒
           </h1>
           <p className="text-[15px] text-neutral-500">
@@ -151,7 +153,11 @@ const TasksPage = () => {
                 />
                 <div className="flex items-start gap-3 sm:gap-4">
                   <button
-                    onClick={() => toggleTaskComplete(task.id)}
+                    onClick={() => {
+  toggleTaskComplete(task.id);
+  const action = task.isCompleted ? '标记为未完成' : '已完成';
+  addToast({ type: task.isCompleted ? 'info' : 'success', message: `「${task.title}」${action}` });
+}}
                     className={`mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       task.isCompleted
                         ? 'bg-primary-500 border-primary-500'
@@ -222,7 +228,10 @@ const TasksPage = () => {
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => deleteTask(task.id)}
+                      onClick={() => {
+  deleteTask(task.id);
+  addToast({ type: 'warning', message: `已删除「${task.title}」` });
+}}
                       className="p-2 rounded-lg hover:bg-[#FF3B30]/10 text-neutral-400 hover:text-[#FF3B30] transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />

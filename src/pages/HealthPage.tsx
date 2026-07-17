@@ -21,6 +21,7 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useToastStore } from '../store/useToastStore';
 import { HEALTH_LABELS, HEALTH_UNITS, HEALTH_GOALS } from '../types';
 import type { HealthType, HealthPlan } from '../types';
 import { getTodayDateString } from '../utils/dateUtils';
@@ -30,6 +31,7 @@ import SettingsModal from '../components/SettingsModal';
 
 const HealthPage = () => {
   const { addHealthRecord, getTodayHealthRecords, getHealthTrend, healthPlans, settings } = useAppStore();
+  const { addToast } = useToastStore();
   const [activeType, setActiveType] = useState<HealthType>('water');
   const [trendDays, setTrendDays] = useState<7 | 30>(7);
   const [showGenerator, setShowGenerator] = useState(false);
@@ -70,6 +72,7 @@ const HealthPage = () => {
       unit: HEALTH_UNITS[type],
       date: getTodayDateString(),
     });
+    addToast({ type: 'success', message: `已记录 ${HEALTH_LABELS[type]} +${amount}${HEALTH_UNITS[type]}` });
   };
 
   const trendData = getHealthTrend(activeType, trendDays).map((record) => ({
@@ -112,12 +115,12 @@ const HealthPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="space-y-4"
     >
       {/* 标题区 */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
             健康管家
           </h1>
           <p className="text-[15px] text-neutral-500">
