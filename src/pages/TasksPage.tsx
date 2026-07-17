@@ -238,7 +238,7 @@ const TasksPage = () => {
       {/* 移动端浮动按钮 */}
       <button
         onClick={handleAdd}
-        className="lg:hidden fixed right-4 bottom-24 w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white z-50 shadow-lg shadow-primary-500/30 hover:bg-primary-600 active:scale-95 transition-all"
+        className="lg:hidden fixed right-4 bottom-28 w-12 h-12 rounded-full bg-primary-500 flex items-center justify-center text-white z-[60] shadow-lg shadow-primary-500/30 hover:bg-primary-600 active:scale-95 transition-all"
       >
         <Plus className="w-6 h-6" />
       </button>

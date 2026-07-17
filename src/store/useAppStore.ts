@@ -214,13 +214,22 @@ export const useAppStore = create<AppState>()(
         set({ syncStatus: 'syncing', syncError: null });
         try {
           const result = await syncAllFromCloud(userId);
+          const hasCloudTasks = result.tasks.length > 0;
+          const hasCloudRecords = result.healthRecords.length > 0;
+          const hasCloudPlans = result.healthPlans.length > 0;
+
           set({
-            tasks: result.tasks.length > 0 ? result.tasks : get().tasks,
-            healthRecords: result.healthRecords.length > 0 ? result.healthRecords : get().healthRecords,
-            healthPlans: result.healthPlans.length > 0 ? result.healthPlans : get().healthPlans,
+            tasks: hasCloudTasks ? result.tasks : get().tasks,
+            healthRecords: hasCloudRecords ? result.healthRecords : get().healthRecords,
+            healthPlans: hasCloudPlans ? result.healthPlans : get().healthPlans,
             settings: result.settings || get().settings,
             syncStatus: 'success',
           });
+
+          // 首次登录：云端为空，把本地数据上传到云端
+          if (!hasCloudTasks && !hasCloudRecords && !hasCloudPlans) {
+            setTimeout(() => get().syncToCloud(), 500);
+          }
         } catch (err) {
           const msg = err instanceof Error ? err.message : '同步失败';
           set({ syncStatus: 'error', syncError: msg });
