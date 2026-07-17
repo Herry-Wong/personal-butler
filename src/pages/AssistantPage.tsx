@@ -138,10 +138,10 @@ const AssistantPage = () => {
       {/* 标题 */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-neutral-800 tracking-tight">
             AI 助手
           </h1>
-          <p className="text-[15px] text-neutral-500">
+          <p className="text-sm text-neutral-400">
             智能对话，帮你管理日常生活
           </p>
         </div>

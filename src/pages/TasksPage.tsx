@@ -74,14 +74,14 @@ const TasksPage = () => {
   const completedTasks = filteredTasks.filter((t) => t.isCompleted).length;
 
   return (
-    <div className="space-y-4">
-      {/* 标题区 - 苹果大标题 */}
+    <div className="space-y-3">
+      {/* 标题区 */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-neutral-800 tracking-tight">
             任务提醒
           </h1>
-          <p className="text-[15px] text-neutral-500">
+          <p className="text-sm text-neutral-400">
             {pendingTasks} 个待完成 · {completedTasks} 个已完成
           </p>
         </div>

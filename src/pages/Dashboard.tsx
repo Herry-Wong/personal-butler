@@ -75,7 +75,7 @@ const Dashboard = () => {
     },
   };
 
-  const circumference = 2 * Math.PI * 54;
+  const circumference = 2 * Math.PI * 36;
   const strokeDashoffset = circumference - (completionRate / 100) * circumference;
 
   return (
@@ -83,26 +83,27 @@ const Dashboard = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4"
+      className="space-y-3"
     >
-      {/* 顶部问候 - 苹果风格大标题 */}
-      <motion.div variants={itemVariants}>
-        <p className="text-sm text-neutral-400 mb-1">{getFullDateDisplay()}</p>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
-          {getGreeting()}
-        </h1>
-        <p className="text-[15px] text-neutral-500">
-          今天有 {totalTasks} 个任务，已完成 {completedTasks} 个
-        </p>
+      {/* 顶部问候 */}
+      <motion.div variants={itemVariants} className="flex items-baseline justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-neutral-800 tracking-tight">
+            {getGreeting()}
+          </h1>
+          <p className="text-sm text-neutral-400">
+            {getFullDateDisplay()} · {totalTasks} 个任务，{completedTasks} 个已完成
+          </p>
+        </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* 今日任务进度 */}
         <motion.div
           variants={itemVariants}
-          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
+          className="bg-white rounded-2xl p-4 border border-neutral-200/60 card-hover"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-neutral-800">今日任务</h3>
             <button
               onClick={() => navigate('/tasks')}
@@ -111,23 +112,23 @@ const Dashboard = () => {
               查看全部 <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex items-center justify-center py-4">
-            <div className="relative w-36 h-36">
+          <div className="flex items-center justify-center py-2">
+            <div className="relative w-24 h-24">
               <svg className="w-full h-full -rotate-90">
                 <circle
-                  cx="72"
-                  cy="72"
-                  r="54"
+                  cx="48"
+                  cy="48"
+                  r="36"
                   stroke="#F5F5F7"
-                  strokeWidth="10"
+                  strokeWidth="8"
                   fill="none"
                 />
                 <motion.circle
-                  cx="72"
-                  cy="72"
-                  r="54"
+                  cx="48"
+                  cy="48"
+                  r="36"
                   stroke="#0071E3"
-                  strokeWidth="10"
+                  strokeWidth="8"
                   fill="none"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
@@ -137,12 +138,12 @@ const Dashboard = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-semibold text-neutral-800">{completionRate}%</span>
-                <span className="text-xs text-neutral-400 mt-0.5">完成率</span>
+                <span className="text-xl font-semibold text-neutral-800">{completionRate}%</span>
+                <span className="text-[10px] text-neutral-400 mt-0.5">完成率</span>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-3 mt-3">
             <div className="bg-neutral-50 rounded-xl py-3 text-center">
               <p className="text-2xl font-semibold text-neutral-800">{completedTasks}</p>
               <p className="text-xs text-neutral-400 mt-0.5">已完成</p>
@@ -157,9 +158,9 @@ const Dashboard = () => {
         {/* 健康概览 */}
         <motion.div
           variants={itemVariants}
-          className="lg:col-span-2 bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
+          className="lg:col-span-2 bg-white rounded-2xl p-4 border border-neutral-200/60 card-hover"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-neutral-800">健康概览</h3>
             <button
               onClick={() => navigate('/health')}
@@ -209,13 +210,13 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* 即将到来 */}
         <motion.div
           variants={itemVariants}
-          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
+          className="bg-white rounded-2xl p-4 border border-neutral-200/60 card-hover"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-primary-500" />
               <h3 className="font-semibold text-neutral-800">即将到来</h3>
@@ -264,9 +265,9 @@ const Dashboard = () => {
         {/* 快捷功能 */}
         <motion.div
           variants={itemVariants}
-          className="bg-white rounded-2xl p-6 border border-neutral-200/60 card-hover"
+          className="bg-white rounded-2xl p-4 border border-neutral-200/60 card-hover"
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-primary-500" />
             <h3 className="font-semibold text-neutral-800">快捷功能</h3>
           </div>

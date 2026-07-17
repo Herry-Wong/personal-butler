@@ -115,15 +115,15 @@ const HealthPage = () => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-4"
+      className="space-y-3"
     >
       {/* 标题区 */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-800 tracking-tight mb-1">
+          <h1 className="text-xl sm:text-2xl font-semibold text-neutral-800 tracking-tight">
             健康管家
           </h1>
-          <p className="text-[15px] text-neutral-500">
+          <p className="text-sm text-neutral-400">
             记录每日健康数据，养成良好习惯
           </p>
         </div>
