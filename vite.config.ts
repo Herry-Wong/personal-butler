@@ -1,11 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tsconfigPaths from "vite-tsconfig-paths";
+import { resolve } from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
   build: {
     sourcemap: 'hidden',
     outDir: 'dist',
@@ -17,7 +22,6 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

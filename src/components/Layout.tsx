@@ -9,7 +9,7 @@ const Layout = () => {
       <Sidebar />
 
       <main
-        className="lg:ml-64 min-h-screen relative z-10"
+        className="lg:ml-64 min-h-screen relative z-10 lg:pb-0"
         style={{
           paddingBottom: 'calc(5rem + env(safe-area-inset-bottom))',
         }}

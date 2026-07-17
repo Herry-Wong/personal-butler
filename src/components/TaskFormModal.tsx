@@ -12,7 +12,16 @@ interface TaskFormModalProps {
 }
 
 const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
-  const { addTask, updateTask } = useAppStore();
+  const { addTask, updateTask, setShowBottomNav } = useAppStore();
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowBottomNav(false);
+    }
+    return () => {
+      setShowBottomNav(true);
+    };
+  }, [isOpen, setShowBottomNav]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -307,7 +316,7 @@ const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-3xl shadow-2xl"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col"
           >
             {/* 顶部拖动条 */}
             <div className="flex justify-center pt-3 pb-2">
@@ -315,7 +324,7 @@ const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
             </div>
 
             {/* 头部 */}
-            <div className="px-5 pb-4 flex items-center justify-between border-b border-neutral-100">
+            <div className="px-5 pb-4 flex items-center justify-between border-b border-neutral-100 shrink-0">
               <h2 className="text-lg font-semibold text-neutral-800">
                 {editTask ? '编辑任务' : '新建任务'}
               </h2>
@@ -327,13 +336,13 @@ const TaskFormModal = ({ isOpen, onClose, editTask }: TaskFormModalProps) => {
               </button>
             </div>
 
-            {/* 表单内容 */}
-            <div className="px-5 py-4 max-h-[60vh] overflow-y-auto">
+            {/* 表单内容 - 可滚动 */}
+            <div className="px-5 py-4 overflow-y-auto flex-1">
               <FormContent />
             </div>
 
-            {/* 底部按钮 - 适配 iPhone 底部安全区域 */}
-            <div className="px-5 pt-4 pb-5 border-t border-neutral-100" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
+            {/* 底部按钮 - 固定底部 */}
+            <div className="px-5 pt-4 border-t border-neutral-100 shrink-0" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
               <ActionButtons />
             </div>
           </motion.div>

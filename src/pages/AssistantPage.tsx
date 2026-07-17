@@ -12,13 +12,20 @@ import {
   User,
   AlertCircle,
   Settings,
+  Loader2,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { formatTime } from '../utils/dateUtils';
-import { chatWithAI, buildAssistantMessages } from '../services/deepseek';
+import { chatWithAI, buildAssistantMessages, parseToolCalls, createToolExecutor } from '../services/deepseek';
+import type { ToolResult } from '../services/deepseek';
+import type { Task, HealthRecord } from '../types';
 
 const AssistantPage = () => {
-  const { chatMessages, addChatMessage, clearChatMessages, settings } = useAppStore();
+  const {
+    chatMessages, addChatMessage, clearChatMessages, settings,
+    tasks, addTask, updateTask, deleteTask,
+    healthRecords, addHealthRecord,
+  } = useAppStore();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +72,37 @@ const AssistantPage = () => {
         messages,
         apiKey: settings.deepseekApiKey,
       });
-      addChatMessage({ role: 'assistant', content: response });
+
+      // 解析工具调用
+      const { text, toolCalls } = parseToolCalls(response);
+
+      if (toolCalls.length > 0) {
+        // 创建工具执行器
+        const executor = createToolExecutor(
+          () => tasks,
+          (task) => addTask(task as unknown as Omit<Task, 'id' | 'createdAt'>),
+          (id, updates) => updateTask(id, updates as Partial<Task>),
+          deleteTask,
+          (record) => addHealthRecord(record as unknown as Omit<HealthRecord, 'id' | 'createdAt'>),
+          () => healthRecords,
+        );
+
+        // 执行工具调用
+        const results: ToolResult[] = toolCalls.map((tc) => executor(tc));
+
+        // 构建最终回复
+        let finalContent = text;
+        if (finalContent) {
+          finalContent += '\n\n';
+        }
+        finalContent += results
+          .map((r) => (r.success ? `✅ ${r.message}` : `❌ ${r.message}`))
+          .join('\n');
+
+        addChatMessage({ role: 'assistant', content: finalContent });
+      } else {
+        addChatMessage({ role: 'assistant', content: text || response });
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : '请求失败，请重试';
       setError(errorMsg);

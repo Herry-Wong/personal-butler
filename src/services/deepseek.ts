@@ -2,23 +2,75 @@ import type { ExerciseAction, DailySchedule, ChatMessage } from '../types';
 
 const API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
-const ASSISTANT_SYSTEM_PROMPT = `你是一个贴心的个人AI管家，帮助用户管理日常生活、工作任务和身体健康。
+const ASSISTANT_SYSTEM_PROMPT = `你是一个贴心的个人AI管家，能够直接操作用户的任务管理、健康记录等所有功能。
 
-你的能力：
-1. 任务管理：帮用户规划任务、提醒事项、时间管理建议
-2. 健康管理：提供健康建议、锻炼指导、饮食建议、睡眠改善
-3. 生活建议：效率提升、习惯养成、压力缓解
-4. 工作辅助：会议安排、优先级排序、专注技巧
+你可以通过以下工具直接操作用户的应用，不需要用户手动操作：
 
-你的风格：
-- 简洁明了，不说废话
-- 温暖贴心，像朋友一样
-- 给出具体可执行的建议，不是空泛的道理
-- 适当使用emoji让回复更生动，但不要太多
-- 如果用户问健康相关的具体问题，给出专业但易懂的建议
-- 如果用户说腰痛、颈椎痛等具体症状，先建议放松动作，再建议就医
+## 可用工具
 
-注意：你只是AI助手，不能替代医生。严重健康问题请建议用户就医。`;
+### create_task - 创建新任务
+参数：
+- title: 任务标题（必填）
+- description: 任务描述（可选，默认空）
+- category: 分类，可选 "work"、"life"、"study"、"other"（默认 "life"）
+- priority: 优先级，可选 "high"、"medium"、"low"（默认 "medium"）
+- dueDate: 截止日期，格式 "YYYY-MM-DDTHH:mm"（如 "2026-07-18T15:00"），默认今天
+- repeat: 重复，可选 "none"、"daily"、"weekly"、"monthly"（默认 "none"）
+- reminderEnabled: 是否提醒，true/false（默认 true）
+
+### update_task - 编辑任务
+参数：
+- id: 任务ID（必填）
+- title: 新标题
+- description: 新描述
+- category: 新分类
+- priority: 新优先级
+- dueDate: 新截止日期
+- repeat: 新重复设置
+- reminderEnabled: 新提醒设置
+
+### delete_task - 删除任务
+参数：
+- id: 任务ID（必填）
+
+### add_health_record - 添加健康记录
+参数：
+- type: 类型，可选 "water"、"exercise"、"sleep"、"weight"
+- value: 数值（必填）
+- unit: 单位（"ml"、"分钟"、"小时"、"kg"）
+- date: 日期，格式 "YYYY-MM-DD"（默认今天）
+- note: 备注（可选）
+
+### get_tasks - 查看任务
+无需参数，返回当前任务列表
+
+### get_health_records - 查看健康记录
+无需参数，返回当前健康记录
+
+## 使用方式
+
+当用户请求你执行操作时，在回复中使用此格式：
+
+[TOOL:工具名]
+{JSON参数，一行}
+[/TOOL]
+
+示例 - 用户说"帮我创建明天下午3点的会议"：
+好的，我来帮你创建！
+[TOOL:create_task]
+{"title": "会议", "category": "work", "priority": "high", "dueDate": "2026-07-18T15:00", "reminderEnabled": true}
+[/TOOL]
+
+## 重要规则
+
+- 用户请求操作时，必须直接执行，不要只说"你可以手动操作"
+- 先执行操作再回复，用户看不到工具调用过程
+- 如果用户想查看任务/健康记录，使用 get_tasks / get_health_records
+- 删除任务前要确认
+- 日期默认用当前年份 2026
+
+你的风格：简洁、温暖、像朋友一样，适当使用emoji。
+注意：你只是AI助手，不能替代医生。`;
 
 interface ChatParams {
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>;
@@ -64,6 +116,156 @@ export function buildAssistantMessages(history: ChatMessage[], userMessage: stri
     ...recentHistory.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
     { role: 'user' as const, content: userMessage },
   ];
+}
+
+// ====== 工具调用解析和执行 ======
+
+export interface ToolCall {
+  tool: string;
+  params: Record<string, unknown>;
+}
+
+export interface ToolResult {
+  success: boolean;
+  message: string;
+}
+
+export function parseToolCalls(response: string): { text: string; toolCalls: ToolCall[] } {
+  const toolCalls: ToolCall[] = [];
+  const text = response.replace(/\[TOOL:(\w+)\]\n?([\s\S]*?)\n?\[\/TOOL\]/g, (_, tool, paramsStr) => {
+    try {
+      const params = JSON.parse(paramsStr.trim());
+      toolCalls.push({ tool, params });
+    } catch {
+      // 忽略解析失败的工具调用
+    }
+    return '';
+  });
+  return { text: text.trim(), toolCalls };
+}
+
+export type ToolExecutor = (toolCall: ToolCall) => ToolResult;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TaskList = Array<Record<string, any>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TaskInput = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TaskUpdates = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HealthRecordInput = Record<string, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type HealthRecordList = Array<Record<string, any>>;
+
+export function createToolExecutor(
+  getTasks: () => TaskList,
+  addTask: (task: TaskInput) => void,
+  updateTask: (id: string, updates: TaskUpdates) => void,
+  deleteTask: (id: string) => void,
+  addHealthRecord: (record: HealthRecordInput) => void,
+  getHealthRecords: () => HealthRecordList,
+): ToolExecutor {
+  return (toolCall: ToolCall): ToolResult => {
+    const { tool, params } = toolCall;
+
+    try {
+      switch (tool) {
+        case 'create_task': {
+          const title = params.title as string;
+          if (!title) return { success: false, message: '任务标题不能为空' };
+
+          const today = new Date().toISOString().slice(0, 10);
+          const dueDate = (params.dueDate as string) || `${today}T18:00`;
+          const dueDateTime = dueDate.includes('T') ? new Date(dueDate).toISOString() : new Date(`${dueDate}T18:00`).toISOString();
+
+          addTask({
+            title,
+            description: (params.description as string) || '',
+            category: (params.category as string) || 'life',
+            priority: (params.priority as string) || 'medium',
+            dueDate: dueDateTime,
+            isCompleted: false,
+            repeat: (params.repeat as string) || 'none',
+            reminderEnabled: params.reminderEnabled !== false,
+          });
+
+          return { success: true, message: `已创建任务「${title}」` };
+        }
+
+        case 'update_task': {
+          const id = params.id as string;
+          if (!id) return { success: false, message: '缺少任务ID' };
+
+          const updates: Record<string, unknown> = {};
+          if (params.title !== undefined) updates.title = params.title;
+          if (params.description !== undefined) updates.description = params.description;
+          if (params.category !== undefined) updates.category = params.category;
+          if (params.priority !== undefined) updates.priority = params.priority;
+          if (params.dueDate !== undefined) {
+            const dd = params.dueDate as string;
+            updates.dueDate = dd.includes('T') ? new Date(dd).toISOString() : new Date(`${dd}T18:00`).toISOString();
+          }
+          if (params.repeat !== undefined) updates.repeat = params.repeat;
+          if (params.reminderEnabled !== undefined) updates.reminderEnabled = params.reminderEnabled;
+
+          updateTask(id, updates);
+          return { success: true, message: `已更新任务` };
+        }
+
+        case 'delete_task': {
+          const id = params.id as string;
+          if (!id) return { success: false, message: '缺少任务ID' };
+          deleteTask(id);
+          return { success: true, message: `已删除任务` };
+        }
+
+        case 'add_health_record': {
+          const type = params.type as string;
+          const value = Number(params.value);
+          const unit = params.unit as string;
+          if (!type || isNaN(value) || !unit) {
+            return { success: false, message: '缺少必要参数 (type, value, unit)' };
+          }
+
+          const today = new Date().toISOString().slice(0, 10);
+          addHealthRecord({
+            type,
+            value,
+            unit,
+            date: (params.date as string) || today,
+            note: (params.note as string) || undefined,
+          });
+
+          return { success: true, message: `已记录${unit === 'ml' ? '饮水' : unit === '分钟' ? '运动' : unit === '小时' ? '睡眠' : '体重'} ${value}${unit}` };
+        }
+
+        case 'get_tasks': {
+          const tasks = getTasks();
+          if (tasks.length === 0) return { success: true, message: '当前没有任务' };
+          const list = tasks.map((t) => {
+            const status = t.isCompleted ? '✅' : '○';
+            const due = t.dueDate ? new Date(t.dueDate).toLocaleString('zh-CN') : '无';
+            return `${status} [${t.id.slice(0, 6)}] ${t.title} - ${t.category}/${t.priority} - ${due}`;
+          }).join('\n');
+          return { success: true, message: `当前任务列表:\n${list}` };
+        }
+
+        case 'get_health_records': {
+          const records = getHealthRecords();
+          if (records.length === 0) return { success: true, message: '当前没有健康记录' };
+          const list = records.slice(0, 20).map((r) =>
+            `- ${r.date}: ${r.type} ${r.value}${r.unit}${r.note ? ` (${r.note})` : ''}`
+          ).join('\n');
+          return { success: true, message: `最近健康记录:\n${list}` };
+        }
+
+        default:
+          return { success: false, message: `未知工具: ${tool}` };
+      }
+    } catch (err) {
+      return { success: false, message: `执行失败: ${err instanceof Error ? err.message : '未知错误'}` };
+    }
+  };
 }
 
 interface GeneratePlanParams {
